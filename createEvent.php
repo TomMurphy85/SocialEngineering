@@ -2,6 +2,7 @@
 <!DOCTYPE HTML>  
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="style.css">
 <style>
 .error {color: #FF0000;}
 </style>
@@ -9,11 +10,18 @@
 <body>  
 
 <?php
+session_start();
+//***********Handle Session Variables***********
+if(empty($_SESSION["sessionEmail"]))
+{
+$_SESSION['redirectLink'] = "createEvent.php";
+header('location: home.php');
+}
+$sessionEmail = $_SESSION["sessionEmail"];
+//***********************************
 include ('functions.php');
 
-// define variables and set to empty values
-$eventNameErr = $eventDateErr = $eventTimeErr = $eventPasswordErr = $reqPasswordErr = "";
-$eventName = $eventDate = $eventTime = $eventPassword = $comment = $reqPassword = "";
+$eventName = $eventDate = $eventTime = $eventPassword = $comment = "";
 $reqMet = "True";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -23,12 +31,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   } else {
     $eventName = test_input($_POST["eventName"]);
     // check if Event Name only contains letters and whitespace
-//TODO - add numbers to acceptable input
-    if (!preg_match("/^[a-zA-Z ]*$/",$eventName)) {
-      $eventNameErr = "Only letters and white space allowed"; 
+    if (!preg_match("/^[a-zA-Z0-9 ]*$/",$eventName)) {
+      $eventNameErr = "Only letters, numbers, and white space allowed"; 
     }
   }
-  
   if (empty($_POST["eventDate"])) {
     $eventDateErr = "Event Date is required";
     $reqMet = "False";
@@ -43,25 +49,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $eventTime = test_input($_POST["eventTime"]);
 	}
 
- if (empty($_POST["reqPassword"])) {
-    $reqPasswordErr = "Password is required";
-    $reqMet = "False";
-  } else {
-    $reqPassword = test_input($_POST["reqPassword"]);
-   }
   if (empty($_POST["comment"])) {
     $comment = "";
   } else {
     $comment = test_input($_POST["comment"]);
   }
 
-  if (empty($_POST["eventPassword"]) && (isset($reqPassword) && $reqPassword=="Yes")) {
-    $eventPasswordErr = "Event Password is required";
-    $reqMet = "False";
-    	
-  } else {
-    $eventPassword = test_input($_POST["eventPassword"]);
-  }
 }
 
 function test_input($data) {
@@ -72,19 +65,11 @@ function test_input($data) {
 }
 ?>
 
-<h2>Voting Submission</h2>
+<h2>Create Event</h2>
 <p><span class="error">* required field</span></p>
 <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">  
 Event Name: <input type="text" name="eventName" value="<?php echo $eventName;?>">
   <span class="error">* <?php echo $eventNameErr;?></span>
-  <br><br>
-Requires Password:
-  <input type="radio" name="reqPassword" <?php if (isset($reqPassword) && $reqPassword=="Yes") echo "checked";?> value="Yes">Yes
-  <input type="radio" name="reqPassword" <?php if (isset($reqPassword) && $reqPassword=="No") echo "checked";?> value="No">No  
-  <span class="error">* <?php echo $availableErr;?></span>
-  <br><br>
-Event Password: <input type="password" name="eventPassword" readonly="false" value="<?php echo $eventPassword;?>">
-  <span class="error">* <?php echo $eventPasswordErr;?></span>
   <br><br>
 Event Date: <input type="Date" name="eventDate" value="<?php echo $eventDate;?>">
   <span class="error">* <?php echo $eventDateErr;?></span>
@@ -94,50 +79,28 @@ Event Time: <input type="Time" name="eventTime" value="<?php echo $eventTime;?>"
   <br><br> 
 Comment: <textarea name="comment" rows="5" cols="40"><?php echo $comment;?></textarea>
   <br><br>
-   <input type="submit" name="submit" value="Submit">  
+   <input type="submit" name="submit" value="Create Event">  
 </form>
-
-<?php
-
-echo "<h2>Your Input:</h2>";
-echo "Event Name: ".$eventName;
-echo "<br>";
-echo "Requires Password: ".$reqPassword;
-echo "<br>";
-echo "Event Password: ".$eventPassword;
-echo "<br>";
-echo "Event Date: ".$eventDate;
-echo "<br>";
-echo "Event Time: ".$eventTime;
-echo "<br>";
-echo "Comment: ".$comment;
-echo "<br>";
-echo "<h2>MySQL Results:</h2>";
-
-
-?>
 
 <?php 
 if (isset($_POST['submit']))
 {
-$myValues = "'" . $eventDate . "'," . " '" . $eventTime . "'," ." '" . $eventName . "'," . " '" . $eventPassword . "'," . " '" . 
-$comment . "'"  ;
+$eventPassword = generatePassword();
+//echo $eventPassword;
+$myValues = "'" . $sessionEmail . "', '" . $eventName . "', '" . $eventDate . "', '" . $eventTime . "', '" . $eventPassword . "', '" . $comment . "'";
 if ($reqMet == "True")
 {
-//writeToDatabase("votingOptions", "Location, enteredBy, userAttending, userComment", $myValues); 
-echo "SQL written";
+writeToDatabase("createEvent", "eventCreator, eventName, eventDate, eventTime, eventPassword, Comments", $myValues); 
+echo "Event successfully created. Your event password is: ". $eventPassword;
+} else
+{ 
+echo "Required fields must not be blank";
 }
-else echo "Required fields must not be blank";
-
 }
 
 ?>
 
-
-
-
-
-
+<p>Want to Manage your Events? <a href="manageEvents.php">Manage Events here</a>.</p>
 
 </body>
 </html>

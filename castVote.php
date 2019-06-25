@@ -1,124 +1,72 @@
+<!DOCTYPE HTML>  
 <?php
-
-//connectToDatabase();
-
-  // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
-    
-// Create MySQL connection
-    $conn = mysqli_connect($servername, $username, $password, $dbName);
-
-// Check connection
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
-
-$sql = 'SELECT * FROM votingOptions';
-		
-$query = mysqli_query($conn, $sql);
-
-if (!$query) {
-	die ('SQL Error: ' . mysqli_error($conn));
-}
+include ('functions.php');
+$voterEmail = "";
+$voteDisp = "display:none";
+$emaildisp = "display:block";
 ?>
 <html>
 <head>
-	<title>Displaying MySQL Data in HTML Table</title>
-	<style type="text/css">
-		body {
-			font-size: 15px;
-			color: #343d44;
-			font-family: "segoe-ui", "open-sans", tahoma, arial;
-			padding: 0;
-			margin: 0;
-		}
-		table {
-			margin: auto;
-			font-family: "Lucida Sans Unicode", "Lucida Grande", "Segoe Ui";
-			font-size: 12px;
-		}
-
-		h1 {
-			margin: 25px auto 0;
-			text-align: center;
-			text-transform: uppercase;
-			font-size: 17px;
-		}
-
-		table td {
-			transition: all .5s;
-		}
-		
-		/* Table */
-		.data-table {
-			border-collapse: collapse;
-			font-size: 14px;
-			min-width: 537px;
-		}
-
-		.data-table th, 
-		.data-table td {
-			border: 1px solid #e1edff;
-			padding: 7px 17px;
-		}
-		.data-table caption {
-			margin: 7px;
-		}
-
-		/* Table Header */
-		.data-table thead th {
-			background-color: #508abb;
-			color: #FFFFFF;
-			border-color: #6ea1cc !important;
-			text-transform: uppercase;
-		}
-
-		/* Table Body */
-		.data-table tbody td {
-			color: #353535;
-		}
-		.data-table tbody td:first-child,
-		.data-table tbody td:nth-child(4),
-		.data-table tbody td:last-child {
-			text-align: right;
-		}
-
-		.data-table tbody tr:nth-child(odd) td {
-			background-color: #f4fbff;
-		}
-		.data-table tbody tr:hover td {
-			background-color: #ffffa2;
-			border-color: #ffff0f;
-		}
-
-		/* Table Footer */
-		.data-table tfoot th {
-			background-color: #e5f5ff;
-			text-align: right;
-		}
-		.data-table tfoot th:first-child {
-			text-align: left;
-		}
-		.data-table tbody td:empty
-		{
-			background-color: #ffcccc;
-		}
-	</style>
+<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<table class="data-table">
-		<caption class="title">Social Engineering: Cast Vote for Location</caption>
+
+
+<!--Sign in with Email address.  This will be replaced by Google oAuth in next release -->
+  <form  method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" >
+Email Address: <input type="text" name="voterEmail" value="<?php echo $voterEmail;?>">
+  <br>     
+   	<input type="submit" name="signIn" value="Sign In"> 
+	</form>
+
+<?php 
+if (isset($_POST['signIn'])){
+//check that user has access to vote
+$voterEmail = (trim($_POST['voterEmail']));
+$emailQuery = readFromDatabase("eventID", "voterInfo", "voterEmail ='$voterEmail'");
+$row = mysqli_fetch_array($emailQuery);
+$eventID = $row['eventID'];
+$emailNumRows = mysqli_num_rows($emailQuery);
+	if($emailNumRows == 0){
+		//if there are no rows, show error
+                echo "Your email is not assigned to any Events.";
+      } 
+//IF the user is only in one Event
+elseif($emailNumRows == 1){
+$emaildisp  = "display:none";
+$voteDisp = "display:block";
+$query = readFromDatabase("*", "voterInfo", "userSubmission <> '' && eventID = '$eventID'");
+}
+//If the user is in multiple Events
+elseif($emailNumRows > 1){
+
+//Create Dropdown to let user select which event they are voting for
+//$DDquery = readFromDatabase("eventID", "voterInfo", "userSubmission <> '' && eventID = '$eventID'");
+		while ($row = mysqli_fetch_array($emailQuery))
+		{
+			$amount = $row['amount'] == 0 ? '' : number_format($row['amount']);
+			$eventID2 = $row['eventID'];
+//DO SOMETHING TO ID What EVENT is available
+
+			$total += $row['amount'];
+			$no++;
+		}
+}
+//something went wrong
+else
+echo "Something went wrong, please reload and try again";
+}
+?>
+<!-- Table to cast vote -->
+	<table style="<?=$votedisp?>" width="40%" class="data-table" >
 		<thead>
 			<tr>
 
 				<th>No</th>
-				<th>ID</th>
-				<th>Vote</th>				
+				<th style="display:none">ID</th>
 				<th>Location</th>
 				<th>Comment</th>
+				<th>Vote</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -129,11 +77,14 @@ if (!$query) {
 		{
 			$amount  = $row['amount'] == 0 ? '' : number_format($row['amount']);
 			echo '<tr>
-					<td>'.$no.'</td>
-					<td>'.$row['ID'].'</td>
-					<td>'."<input type=\"radio\" name=\"voteBtn\" value=\"voteBtn\"/>".'</td>
-					<td>'.$row['Location'].'</td>
-					<td>'.$row['userComment'].'</td>
+					<td width="10%"><center>'.$no.'</center></td>
+					<td style="display:none;">'.$row['voteID'].'</td>
+					<td><center>'.$row['userSubmission'].'</center></td>
+					<td><center>'.$row['userComment'].'</center></td>
+					<td width="10%"><form method="post" action="">
+					<input type="submit" name="action" value="Vote"/>
+					<input type="hidden" name="id" value="'.$row['voteID'].'"/>
+					</form></td>
 				</tr>';
 			$total += $row['amount'];
 			$no++;
@@ -141,18 +92,15 @@ if (!$query) {
 		</tbody>
 	</table>
 
-<center><br><input type="submit" name="submit" value="Cast Vote">
-</center>	
-
 <?php 
 //Register Vote and write to Database.  Currently not working, isn't catching isset() for submit button.
-if (isset($_POST['submit'])) 
-{
-if(isset($_POST['voteBtn']))
-{
-echo "You have selected :".$_POST['radio'];  //  Displaying Selected Value
+//******Delete Table Row******
+if ($_POST['action'] && $_POST['id']) {
+  if ($_POST['action'] = 'vote') {
+writeToDatabase('voterInfo', 'voteID', $_POST['id']);
+  }
 }
-}
+
 ?>
 </body>
 </html>
