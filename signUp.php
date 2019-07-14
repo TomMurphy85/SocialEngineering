@@ -56,8 +56,9 @@ $numRowsEmail = mysqli_num_rows($Emailquery);
     if(empty($username_err) && empty($password_err) && empty($confirm_password_err)){
         
         // Prepare an insert statement
-	    $myValues = "'" . $username . "', '" . $password . "', '" . $Email . "'";
-	    writeToDatabase("Users", "userName, userPassword, userEmail" , $myValues );
+	    $myValues = "'" . $password . "', '" . $Email . "'";
+	    writeToDatabase("Users", "userPassword, userEmail" , $myValues );
+		$email_err = "Account Created Successfully.";
     }
 }
 ?>
@@ -78,11 +79,11 @@ $numRowsEmail = mysqli_num_rows($Emailquery);
         <h2>Sign Up</h2>
         <p>Please fill this form to create an account.</p>
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-            <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
-                <label>Username</label>
-                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
-                <span class="help-block"><?php echo $username_err; ?></span>
-            </div>    
+            <div class="form-group <?php echo (!empty($email_err)) ? 'has-error' : ''; ?>">
+                <label>Email Address</label>
+                <input type="text" name="Email" class="form-control" value="<?php echo $Email; ?>">
+                <span class="help-block"><?php echo $email_err; ?></span>
+            </div>     
             <div class="form-group <?php echo (!empty($password_err)) ? 'has-error' : ''; ?>">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control" value="<?php echo $password; ?>">
@@ -93,14 +94,9 @@ $numRowsEmail = mysqli_num_rows($Emailquery);
                 <input type="password" name="confirm_password" class="form-control" value="<?php echo $confirm_password; ?>">
                 <span class="help-block"><?php echo $confirm_password_err; ?></span>
             </div>
-            <div class="form-group <?php echo (!empty($email_err)) ? 'has-error' : ''; ?>">
-                <label>Email Address</label>
-                <input type="text" name="Email" class="form-control" value="<?php echo $Email; ?>">
-                <span class="help-block"><?php echo $email_err; ?></span>
-            </div>  
             <div class="form-group">
                 <input type="submit" class="btn btn-primary" value="Submit">
-                <input type="reset" class="btn btn-default" value="Reset">
+             <!--   <input type="reset" class="btn btn-default" value="Reset"> -->
             </div>
             <p>Already have an account? <a href="home.php">Login here</a>.</p>
         </form>

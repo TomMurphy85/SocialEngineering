@@ -30,16 +30,15 @@ CREATE TABLE `eventHistory` (
   UNIQUE KEY `ID_UNIQUE` (`eventID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE `Users` (
+select * from createEventCREATE TABLE `Users` (
   `userID` int(11) NOT NULL AUTO_INCREMENT,
-  `userName` varchar(45) NOT NULL,
   `userEmail` varchar(45) NOT NULL,
   `userPassword` varchar(45) NOT NULL,
   PRIMARY KEY (`userID`),
-  UNIQUE KEY `userName_UNIQUE` (`userName`),
   UNIQUE KEY `userID_UNIQUE` (`userID`),
   UNIQUE KEY `userEmail_UNIQUE` (`userEmail`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+
 
 CREATE TABLE `voterInfo` (
   `voteID` int(11) NOT NULL AUTO_INCREMENT,
