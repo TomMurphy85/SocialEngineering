@@ -13,6 +13,7 @@ $sessionEmail = $_SESSION["sessionEmail"];
 }
 $query = readFromDatabase("*", "voterInfo", "eventID = '$sessionID'");
 $eventquery = readFromDatabase("*", "createEvent", "eventID = '$sessionID'");
+echo displayNav("details");
 ?>
 
 <html>
@@ -32,8 +33,8 @@ $row = mysqli_fetch_array($editQuery);
 $eventName = $row['eventName'];
 $eventDate = $row['eventDate'];
 $eventTime = $row['eventTime'];
-$eventPassword = $row['eventPassword'];
 $comment = $row['Comments'];
+$eventPhase = $row['eventPhase'];
 }
 
 function test_input($data) {
@@ -56,12 +57,19 @@ Event Date: <input type="Date" name="eventDate" value="<?php echo $eventDate;?>"
 Event Time: <input type="Time" name="eventTime" value="<?php echo $eventTime;?>">
   <span class="error">* <?php echo $eventTimeErr;?></span>
   <br><br> 
-Event Password: <input type="text" name="eventPassword" value="<?php echo $eventPassword;?>">
-  <span class="error">* <?php echo $eventPasswordErr;?></span>
-  <br><br>
 Comment: <textarea name="Comments" rows="5" cols="40"><?php echo $comment;?></textarea>
   <br><br>
-   <input type="submit" name="update" value="Update Event">  
+Event Phase:        
+    <select name="phaseSelect"> 
+    <option selected="selected"> <? echo $eventPhase; ?> </option>
+        <option value="Submission">Accepting Submissions</option>
+        <option value="firstVote">First Round Voting</option>
+        <option value="finalVote">Final Vote</option>
+        <option value="voteClosed">Voting Closed</option>
+    </select>
+  <br><br>
+   <input type="submit" name="update" value="Update Event"> 
+   <br>
 </form>
 
 <?php
@@ -70,13 +78,19 @@ if (isset($_POST['update']))
 $eventName = $_POST['eventName'];
 $eventDate = $_POST['eventDate'];
 $eventTime = $_POST['eventTime'];
-$eventPassword = $_POST['eventPassword'];
 $comment = $_POST['Comments'];
-if ((!empty($eventName)) && (!empty($eventDate)) && (!empty($eventTime)) && (!empty($eventPassword)))
+$eventPhase = $_POST['phaseSelect'];
+
+
+echo "Phase: ".$eventPhase;
+if ((!empty($eventName)) && (!empty($eventDate)) && (!empty($eventTime)))
 {
 
+//Check if event name/comment contains apostrophe add second apostrophe to write to SQL
+$eventName = str_replace("'", "''", $eventName);
+$comment = str_replace("'", "''", $comment);
 
-UpdateDatabase("createEvent", "eventName = '$eventName', eventDate = '$eventDate', eventTime = '$eventTime', eventPassword = '$eventPassword', Comments = '$comment'", "eventID = $sessionID"); 
+UpdateDatabase("createEvent", "eventName = '$eventName', eventDate = '$eventDate', eventTime = '$eventTime', Comments = '$comment', eventPhase = '$eventPhase'", "eventID = $sessionID"); 
 
 header("Refresh:0");
 } 
@@ -128,24 +142,35 @@ echo "Required fields must not be blank";
 		}?>
 		</tbody>
 	</table>
-
-<form method="post" onsubmit="return confirm('This will delete all members and votes for this event.  Do you wish to continue?');" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+<form method="post" onsubmit="return confirm('This will delete all members and votes for this event, except the event Creator.  Do you wish to continue?');" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
 <center><br>
 <input type="submit" onclick="confirmPress()" class= "delete"  name="clearTable" value="Clear Table" >
-</center>
+
 </form>
+<form method="post" onsubmit="return confirm('This will delete all votes for this event. All members will remain listed. Do you wish to continue?');" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+<br>
+<input type="submit" onclick="confirmPress()" class= "delete"  name="clearVotes" value="Clear Votes" >
+</form>
+</center>
+</div>
 <?php 
 //******Delete voterINFO*******
 if ($_POST['action'] && $_POST['id']) {
   if ($_POST['action'] = 'delete') {
-    deleteTableRow("voterInfo", $_POST['id']);
+    clearTable("voterInfo", "voteID = ".$_POST['id']);  
 	header("Refresh:0");
   }
 }
 
 if (isset($_POST['clearTable']))
 {
-clearTable("voterInfo", "eventID = $sessionID");
+clearTable("voterInfo", "eventID = $sessionID && voterEmail <> '$sessionEmail'");
+UpdateDatabase("voterInfo", "userVote = NULL, userAttending = NULL, userComment = NULL, userSubmission = NULL, finalVote = NULL", "eventID = $sessionID"); 
+header("Refresh:0");
+}
+if (isset($_POST['clearVotes']))
+{
+UpdateDatabase("voterInfo", "userVote = NULL, userAttending = NULL, userComment = NULL, userSubmission = NULL, finalVote = NULL", "eventID = $sessionID"); 
 header("Refresh:0");
 }
 //****************************
@@ -161,7 +186,8 @@ else if (!filter_var($_POST["eMail"], FILTER_VALIDATE_EMAIL))
     $eMailErr = "Invalid email format";  
 else
 {
-      writeToDatabase("voterInfo", "eventID, voterEmail", "'$sessionID', '".$_POST["eMail"]."'"); 
+    $eMail = str_replace("'", "''", $_POST["eMail"]);
+      writeToDatabase("voterInfo", "eventID, voterEmail", "'$sessionID', '".$eMail."'"); 
 	header("Refresh:0");
 }}
 ?>

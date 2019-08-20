@@ -20,8 +20,8 @@ header('location: home.php');
 $sessionEmail = $_SESSION["sessionEmail"];
 //***********************************
 include ('functions.php');
-
-$eventName = $eventDate = $eventTime = $eventPassword = $comment = "";
+echo displayNav("create");
+$eventName = $eventDate = $eventTime = $comment = "";
 $reqMet = "True";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -31,8 +31,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   } else {
     $eventName = test_input($_POST["eventName"]);
     // check if Event Name only contains letters and whitespace
-    if (!preg_match("/^[a-zA-Z0-9 ]*$/",$eventName)) {
-      $eventNameErr = "Only letters, numbers, and white space allowed"; 
+    if (!preg_match("/^[a-zA-Z0-9 ']*$/",$eventName)) {
+      $eventNameErr = "Only letters, numbers, apostrophe, and white space allowed"; 
     }
   }
   if (empty($_POST["eventDate"])) {
@@ -85,13 +85,26 @@ Comment: <textarea name="comment" rows="5" cols="40"><?php echo $comment;?></tex
 <?php 
 if (isset($_POST['submit']))
 {
-$eventPassword = generatePassword();
-//echo $eventPassword;
-$myValues = "'" . $sessionEmail . "', '" . $eventName . "', '" . $eventDate . "', '" . $eventTime . "', '" . $eventPassword . "', '" . $comment . "'";
+//Check if event name contains apostrophe add second apostrophe to write to SQL
+$eventName = str_replace("'", "''", $eventName);
+$sessionEmail = str_replace("'", "''", $sessionEmail);
+$comment = str_replace("'", "''", $comment);
+
+$myValues = "'" . $sessionEmail . "', '" . $eventName . "', '" . $eventDate . "', '" . $eventTime . "', '" . $comment . "', '". "Submission" . "'";
 if ($reqMet == "True")
 {
-writeToDatabase("createEvent", "eventCreator, eventName, eventDate, eventTime, eventPassword, Comments", $myValues); 
-echo "Event successfully created. Your event password is: ". $eventPassword;
+writeToDatabase("createEvent", "eventCreator, eventName, eventDate, eventTime, Comments, eventPhase", $myValues);
+
+//Query to find newly created eventID
+$queryEventID = readFromDatabase("eventID", "createEvent", " eventCreator = '$sessionEmail' && eventName = '$eventName'");
+
+//add event creator to the newly created event
+$getID = mysqli_fetch_array($queryEventID);
+$eventID = $getID['eventID'];
+writeToDatabase("voterInfo", "eventID, voterEmail", "'$eventID', '$sessionEmail'"); 
+echo "Event Titled ".$eventName." was created successfully.";
+
+header('location: manageEvents.php');    
 } else
 { 
 echo "Required fields must not be blank";

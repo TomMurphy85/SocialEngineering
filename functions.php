@@ -7,10 +7,10 @@ function connectToDatabase()
 // Function currently not working correctly.  Connection does not Persist beyond Function Call.
 {
   // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
+    $servername = "127.0.0.1:3306";
+    $username = "u735717670_admin";
+    $password = "V1hQXhICiQVk";
+    $dbName = "u735717670_wi";
     
 // Create MySQL connection
     $conn = mysqli_connect('p:'.$servername, $username, $password, $dbName);
@@ -30,10 +30,10 @@ function writeToDatabase($tableName, $colNames, $colValues)
 //connectToDatabase();
 
   // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
+    $servername = "127.0.0.1:3306";
+    $username = "u735717670_admin";
+    $password = "V1hQXhICiQVk";
+    $dbName = "u735717670_wi";
     
 // Create MySQL connection
     $conn = mysqli_connect($servername, $username, $password, $dbName);
@@ -65,10 +65,10 @@ function readFromDatabase($values, $tableName, $conditions)
 //connectToDatabase();
 //echo "Connected to readFromDatabase";
   // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
+    $servername = "127.0.0.1:3306";
+    $username = "u735717670_admin";
+    $password = "V1hQXhICiQVk";
+    $dbName = "u735717670_wi";
 
 // Create MySQL connection
     $conn = mysqli_connect($servername, $username, $password, $dbName);
@@ -103,10 +103,10 @@ function UpdateDatabase($tableName, $setValues, $condition)
 //connectToDatabase();
 
   // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
+    $servername = "127.0.0.1:3306";
+    $username = "u735717670_admin";
+    $password = "V1hQXhICiQVk";
+    $dbName = "u735717670_wi";
     
 // Create MySQL connection
     $conn = mysqli_connect($servername, $username, $password, $dbName);
@@ -122,7 +122,7 @@ $sql = "Update $tableName SET $setValues WHERE $condition";
 
 if ($conn->query($sql) === TRUE) 
 {
-   echo "<p>Row Updated successfully<br><br>";
+  // echo $sql;
 } 
 else 
 {
@@ -138,10 +138,10 @@ function clearTable($tableName, $condition)
 //connectToDatabase();
 
   // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
+    $servername = "127.0.0.1:3306";
+    $username = "u735717670_admin";
+    $password = "V1hQXhICiQVk";
+    $dbName = "u735717670_wi";
     
 // Create MySQL connection
     $conn = mysqli_connect($servername, $username, $password, $dbName);
@@ -186,50 +186,116 @@ echo "button Pressed";
  confirm("Press a button!");
 }
 //*****************************************
-//Function to clear a row from a table based on passed ID, and SQL Table Name
+//Functions for mechanics on castVote.php
 //*****************************************
-function deleteTableRow($tableName, $rowID)
+function showEvents($eventList)
 {
+echo '<table width="40%" class="data-table" >
+		<thead>
+			<tr>
+				<th>No</th>
+				<th style="display:none">ID</th>
+				<th>Event Name</th>
+				<th>Event Date</th>
+				<th>Event Time</th>
+				<th>Comments</th>
+				<th>Event Phase</th>
+			</tr>
+		</thead>
+		<tbody>';
+		$no 	= 1;
+		$total 	= 0;
+	while ($row = mysqli_fetch_array($eventList))
+		{
+			$amount  = $row['amount'] == 0 ? '' : number_format($row['amount']);
 
-//connectToDatabase();
-
-  // MySQL details
-    $servername = "localhost";
-    $username = "root";
-    $password = "osboxes.org";
-    $dbName = "socialEngineering";
-    $tableID = "";
-// Create MySQL connection
-    $conn = mysqli_connect($servername, $username, $password, $dbName);
-
-// Check connection
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+			echo '<tr class="row">
+					<td>'.$no.'</td>
+                    <td style="display:none;">'.$row['eventID'].'</td>
+					<td><a href="/castVote.php?eventID='.$row['eventID'].'">'.$row['eventName'].'</a></td>
+					<td>'.$row['eventDate'].'</td>
+					<td>'.$row['eventTime'].'</td>
+					<td>'.$row['Comments'].'</td>
+					<td>'.$row['eventPhase'].'</td>
+				</tr>';
+			$total += $row['amount'];
+			$no++;
+		}
+		echo '</tbody></table><br><br>';
 }
-//Switch to determine which Table is being altered
 
-switch($tableName)
+//*****************************************
+//Read and return single value from VoterInfo
+//*****************************************
+function ReadVoterInfo($eventID, $voterEmail, $Value)
 {
-case "createEvent":
-$tableID = "eventID";
+    $voterQuery = readFromDatabase("*", "voterInfo", "voterEmail = '$voterEmail' && eventID = '$eventID'");
+    while ($voterRow = mysqli_fetch_array($voterQuery))
+    {
+    	$amount         = $voterRow['amount'] == 0 ? '' : number_format($voterRow['amount']);
+    switch ($Value) {
+    case "Vote":
+        $return = $voterRow['userVote'];
+        break;
+    case "Email":
+        $return = $voterRow['voterEmail'];
+        break;
+    case "Attending":
+        $return = $voterRow['userAttending'];
+        break;
+    case "Comment":
+        $return = $voterRow['userComment'];
+        break;    
+    case "Submission":
+        $return = $voterRow['userSubmission'];
+        break;
+    case "finalVote":
+        $return = $voterRow['finalVote'];
+        break;    
+    case "Count":
+        $return = mysqli_num_rows($voterQuery);
+        break;    
+    
+}
+
+        return $return;
+    }
+}
+
+//*****************************************
+//Function to show Nav bar at the top of each page.
+//*****************************************
+function displayNav($active)
+{
+$home = '';
+$create = '';
+$manage = '';
+$vote = '';
+switch($active)
+{
+case "home":
+$home = "class='active'";
 break;
-case "Users":
-$tableID = "userID";
+case "create":
+$create = "class='active'";
 break;
-case "voterInfo":
-$tableID = "voteID";
+case "manage":
+$manage = "class='active'";
+break;
+case "vote":
+$vote = "class='active'";
 break;
 }
-//Write to SQL Database
-$sql = "delete FROM $tableName where $tableID = '$rowID'";
 
-if ($conn->query($sql) === TRUE) 
-{
-    echo "<p>Row Deleted";
-} 
-else 
-{
-    echo "Error: " . $sql . "<br>" . $conn->error;
-} 
+    
+
+$navBar = '<div class="topnav">
+    <a '.$home.'    href="home.php">Home</a>
+    <a '.$create.'  href="createEvent.php">Create Event</a>
+    <a '.$manage.'   href="manageEvents.php">Manage Events</a>
+    <a '.$vote.'    href="castVote.php">Cast Vote</a>
+</div>';
+return $navBar;
 }
 ?>
+

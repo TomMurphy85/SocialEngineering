@@ -10,7 +10,7 @@ header('location: home.php');
 
 $userEmail = $_SESSION["sessionEmail"];
 $query = readFromDatabase("*", "createEvent", "eventCreator = '$userEmail'");
-
+echo displayNav("manage");
 ?>
 <html>
 <head>
@@ -44,12 +44,12 @@ $query = readFromDatabase("*", "createEvent", "eventCreator = '$userEmail'");
 			echo '<tr>
 					<td>'.$no.'</td>
 					<td style="display:none;">'.$row['eventID'].'</td>
-					<td>'.$row['eventName'].'</td>
+					<td><a href="/castVote.php?eventID='.$row['eventID'].'">'.$row['eventName'].'</a></td>
 					<td>'.$row['eventDate'].'</td>
 					<td>'.$row['eventTime'] . '</td>
 					<td>'.$row['Comments'].'</td>
 					<td><form method="post" action="">
-					<input type="submit" name="edit" value="Edit"/>
+					<input type="submit" name="edit" value="Manage"/>
 					<input type="hidden" name="id" value="'.$row['eventID'].'"/>
 					</form></td>
 					<td><form method="post" action="">
@@ -72,8 +72,9 @@ $query = readFromDatabase("*", "createEvent", "eventCreator = '$userEmail'");
 //******ALter Event Info Row******
 if (($_POST['edit'] || $_POST['delete']) && $_POST['id']) {
   if ($_POST['delete']) {
-	deleteTableRow("createEvent", $_POST['id']);
-header("Refresh:0");
+	clearTable("createEvent", "eventID = ".$_POST['id']);
+	clearTable("voterInfo", "eventID = ".$_POST['id']);
+    header("Refresh:0");
 }
  elseif ($_POST['edit']) {
 $_SESSION["sessionEventID"] = $_POST['id'];
